@@ -1,0 +1,41 @@
+{
+  "name": "smart-assignment-workload-balancer-server",
+  "version": "1.0.0",
+  "description": "Backend service for Smart Assignment Workload Balancer",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "build": "prisma generate && prisma db push",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "test": "node src/tests/balancer.test.js"
+  },
+  "keywords": [
+    "workload-balancer",
+    "google-classroom",
+    "google-calendar",
+    "google-drive",
+    "gemini",
+    "socketio"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^2.23.0",
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "^5.16.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "googleapis": "^140.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
+    "prisma": "^5.16.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

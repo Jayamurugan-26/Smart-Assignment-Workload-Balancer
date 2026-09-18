@@ -1,0 +1,195 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String             @id @default(cuid())
+  email           String             @unique
+  name            String?
+  avatar          String?
+  googleId        String?            @unique
+  accessToken     String?
+  refreshToken    String?
+  tokenExpiry     DateTime?
+  weekdayCapacity Float              @default(4.0)
+  weekendCapacity Float              @default(6.0)
+  department      String?
+  academicYear    String?
+  semester        String?
+  studentIdNumber String?
+  themePreference String             @default("light")
+  courses         Course[]
+  assignments     Assignment[]
+  studyBlocks     StudyBlock[]
+  snapshots       WorkloadSnapshot[]
+  notifications   Notification[]
+  chatMessages    AiChatMessage[]
+  analysisSessions FileAnalysisSession[]
+  studySessions   StudySession[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model Course {
+  id             String       @id @default(cuid())
+  googleCourseId String?
+  name           String       // e.g. "Data Structures & Algorithms"
+  code           String?      // e.g. "CS 301"
+  section        String?
+  room           String?
+  teacherName    String?
+  color          String       @default("#3b82f6")
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignments    Assignment[]
+  studySessions  StudySession[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+}
+
+model Assignment {
+  id                     String       @id @default(cuid())
+  classroomCourseworkId  String?      @map("classroom_coursework_id")
+  title                  String
+  description            String?
+  dueDate                DateTime     @map("due_date")
+  dueTime                String?      @default("23:59") @map("due_time")
+  difficulty             Int          @default(3) // 1 to 5
+  estimatedMinutes       Int          @default(180) @map("estimated_minutes") // in minutes
+  actualMinutes          Int?         @map("actual_minutes")
+  priority               String       @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status                 String       @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, DELETED
+  startedAt              DateTime?    @map("started_at")
+  completedAt            DateTime?    @map("completed_at")
+  deletedAt              DateTime?    @map("deleted_at")
+  notes                  String?
+  isLocallyEdited        Boolean      @default(false) @map("is_locally_edited")
+  deadlineRisk           String       @default("LOW") @map("deadline_risk") // LOW, MODERATE, HIGH, CRITICAL
+  aiAnalysis             String?      @map("ai_analysis") // JSON string of AI assessment & micro-steps
+  rubricSummary          String?      @map("rubric_summary")
+  driveAttachments       String?      @map("drive_attachments") // JSON string of attachments with preview text
+  courseId               String       @map("course_id")
+  course                 Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId                 String       @map("user_id")
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  microTasks             MicroTask[]
+  studyBlocks            StudyBlock[]
+  studySessions          StudySession[]
+  createdAt              DateTime     @default(now()) @map("created_at")
+  updatedAt              DateTime     @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@index([classroomCourseworkId])
+}
+
+model MicroTask {
+  id              String      @id @default(cuid())
+  title           String
+  durationMinutes Int         @default(45) @map("duration_minutes")
+  orderIndex      Int         @default(0) @map("order_index")
+  completed       Boolean     @default(false)
+  assignmentId    String      @map("assignment_id")
+  assignment      Assignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studyBlockId    String?     @map("study_block_id")
+  studyBlock      StudyBlock? @relation(fields: [studyBlockId], references: [id])
+  createdAt       DateTime    @default(now()) @map("created_at")
+}
+
+model StudyBlock {
+  id                 String      @id @default(cuid())
+  googleEventId      String?     @map("google_event_id")
+  title              String
+  startTime          DateTime    @map("start_time")
+  endTime            DateTime    @map("end_time")
+  durationHours      Float       @map("duration_hours")
+  isSyncedToCalendar Boolean     @default(false) @map("is_synced_to_calendar")
+  userId             String      @map("user_id")
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignmentId       String      @map("assignment_id")
+  assignment         Assignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  microTasks         MicroTask[]
+  createdAt          DateTime    @default(now()) @map("created_at")
+}
+
+model WorkloadSnapshot {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date           DateTime
+  allocatedHours Float    @map("allocated_hours")
+  capacityHours  Float    @map("capacity_hours")
+  burnoutRisk    String   @default("LOW") @map("burnout_risk")
+  createdAt      DateTime @default(now()) @map("created_at")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("SYSTEM") // DEADLINE, RISK, COMPLETED, SYNC, ANALYSIS, SYSTEM
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  String?  // JSON string e.g. { assignmentId, sessionUrl }
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+}
+
+model AiChatMessage {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role         String   // "user" or "assistant"
+  content      String
+  imageUrl     String?  @map("image_url") // Generated or uploaded image URL
+  modelUsed    String?  @map("model_used") // e.g. "gemini-1.5-flash", "imagen-3.0-generate-002"
+  assignmentId String?  @map("assignment_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+}
+
+model FileAnalysisSession {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName       String   @map("file_name")
+  fileType       String   @map("file_type") // e.g. "image/png", "application/pdf"
+  fileSize       Int?     @map("file_size")
+  filePath       String?  @map("file_path")
+  sourceType     String   @default("UPLOAD") @map("source_type") // UPLOAD, CLASSROOM_ATTACHMENT
+  status         String   @default("COMPLETED") // PENDING, PROCESSING, COMPLETED, FAILED
+  extractedText  String?  @map("extracted_text")
+  analysisResult String?  @map("analysis_result") // JSON string of summary, requirements, points, approach, study breakdown
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, createdAt])
+}
+
+model StudySession {
+  id              String      @id @default(cuid())
+  userId          String      @map("user_id")
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignmentId    String?     @map("assignment_id")
+  assignment      Assignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  courseId        String?     @map("course_id")
+  course          Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  startedAt       DateTime    @default(now()) @map("started_at")
+  endedAt         DateTime?   @map("ended_at")
+  durationSeconds Int         @default(0) @map("duration_seconds")
+  status          String      @default("ACTIVE") // ACTIVE, PAUSED, COMPLETED, CANCELLED
+  lastResumedAt   DateTime?   @map("last_resumed_at")
+  notes           String?
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@index([userId, startedAt])
+}

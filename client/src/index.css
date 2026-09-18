@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme-Aware CSS Design Tokens (Strictly Manual, Independent of OS prefers-color-scheme) */
+:root,
+:root[data-theme="light"],
+html[data-theme="light"],
+html:not(.dark),
+[data-theme="light"] {
+  --background: #f5f7fb;
+  --foreground: #1f2937;
+  --app-bg: #f5f7fb;
+  --app-text: #1f2937;
+  --muted-text: #64748b;
+  
+  /* Light Theme Glassmorphism Tokens */
+  --card-background: rgba(255, 255, 255, 0.70);
+  --card-background-hover: rgba(255, 255, 255, 0.90);
+  --card-border: rgba(255, 255, 255, 0.70);
+  --card-border-hover: rgba(59, 130, 246, 0.40);
+  --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --card-shadow-hover: 0 14px 36px 0 rgba(31, 38, 135, 0.12);
+  --card-text: #1f2937;
+  --card-heading: #090d16;
+  --card-muted-text: #64748b;
+  --card-subtle-text: #64748b;
+  --card-glass-blur: blur(14px);
+  --card-divider: rgba(226, 232, 240, 0.75);
+  --card-inner-surface: rgba(241, 245, 249, 0.70);
+  --card-inner-surface-hover: rgba(241, 245, 249, 0.95);
+  --sidebar-bg: rgba(255, 255, 255, 0.90);
+  --sidebar-border: #e2e8f0;
+}
+
+:root[data-theme="dark"],
+html[data-theme="dark"],
+html.dark,
+[data-theme="dark"],
+.dark {
+  --background: #0b1120;
+  --foreground: #f8fafc;
+  --app-bg: #0b1120;
+  --app-text: #f8fafc;
+  --muted-text: #cbd5e1;
+  
+  /* Dark Theme Glassmorphism Tokens */
+  --card-background: rgba(20, 25, 35, 0.65);
+  --card-background-hover: rgba(28, 35, 48, 0.85);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --card-border-hover: rgba(59, 130, 246, 0.45);
+  --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.40);
+  --card-shadow-hover: 0 16px 40px 0 rgba(0, 0, 0, 0.60);
+  --card-text: #f8fafc;
+  --card-heading: #ffffff;
+  --card-muted-text: #cbd5e1;
+  --card-subtle-text: #94a3b8;
+  --card-glass-blur: blur(14px);
+  --card-divider: rgba(51, 65, 85, 0.60);
+  --card-inner-surface: rgba(30, 41, 59, 0.60);
+  --card-inner-surface-hover: rgba(51, 65, 85, 0.75);
+  --sidebar-bg: rgba(11, 17, 32, 0.92);
+  --sidebar-border: #1e293b;
+}
+
+@layer base {
+  *, *::before, *::after {
+    font-family: "Times New Roman", Times, serif !important;
+  }
+
+  html, body, #root {
+    font-family: "Times New Roman", Times, serif !important;
+    min-height: 100vh;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* Glassmorphism Card System */
+.glass-card {
+  background: var(--card-background);
+  -webkit-backdrop-filter: var(--card-glass-blur);
+  backdrop-filter: var(--card-glass-blur);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  color: var(--card-text);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.25s ease,
+              border-color 0.25s ease;
+}
+
+/* Subtle elevation hover effect on desktop */
+@media (hover: hover) and (pointer: fine) {
+  .glass-card:hover {
+    background: var(--card-background-hover);
+    border-color: var(--card-border-hover);
+    box-shadow: var(--card-shadow-hover);
+    transform: translateY(-2px);
+  }
+}
+
+/* Graceful fallback if backdrop-filter is not supported */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  :root[data-theme="light"] .glass-card,
+  html:not(.dark) .glass-card {
+    background: rgba(255, 255, 255, 0.96);
+  }
+  :root[data-theme="dark"] .glass-card,
+  html.dark .glass-card {
+    background: rgba(15, 23, 42, 0.96);
+  }
+}
+
+/* Global Subtle Theme Transitions */
+.theme-transition {
+  transition: background-color 0.25s ease, 
+              border-color 0.25s ease, 
+              color 0.25s ease, 
+              box-shadow 0.25s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 9999px;
+}
+
+html.dark ::-webkit-scrollbar-thumb,
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

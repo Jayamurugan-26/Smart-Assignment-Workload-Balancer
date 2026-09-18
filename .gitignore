@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment variables & secrets (CRITICAL: Never push these)
+.env
+.env.*
+!.env.example
+*/.env
+*/.env.*
+!*/.env.example
+
+# Databases & SQLite files
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+dev.db
+dev.db-journal
+prisma/dev.db
+server/prisma/dev.db
+server/prisma/*.db
+
+# Uploads & User documents
+uploads/
+server/uploads/
+*/uploads/
+
+# Build artifacts
+dist/
+build/
+client/dist/
+
+# Logs & System
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
