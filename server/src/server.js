@@ -73,6 +73,16 @@ io.on("connection", (socket) => {
   });
 });
 
+// Friendly Root Endpoint
+app.get("/", (req, res) => {
+  res.json({
+    status: "active",
+    message: "Smart Assignment Workload Balancer Backend API is running smoothly!",
+    health: "/api/health",
+    frontend: clientUrl,
+  });
+});
+
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({
