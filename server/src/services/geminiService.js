@@ -20,10 +20,11 @@ function getGenAIClient() {
 function getModelCandidates() {
   const envModel = process.env.GEMINI_MODEL;
   const defaults = [
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-pro",
+    "gemini-3.6-flash",
+    "gemini-flash-latest",
     "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
   ];
   const list = envModel ? [envModel, ...defaults] : defaults;
   // Deduplicate preserving order
@@ -171,25 +172,50 @@ INSTRUCTIONS:
 8. Format responses cleanly with markdown, bullet points, and bold text.`;
 
   try {
-    // Format conversation history for @google/genai
-    const formattedContents = [];
+    // Format conversation history for @google/genai with strict role alternation
+    const rawTurns = [];
 
     // Include past valid turns (last 8 messages)
     const recentHistory = history.slice(-8);
     for (const msg of recentHistory) {
       if (msg.content && msg.content.trim()) {
-        formattedContents.push({
+        rawTurns.push({
           role: msg.role === "assistant" ? "model" : "user",
-          parts: [{ text: msg.content.trim() }]
+          text: msg.content.trim()
         });
       }
     }
 
     // Append current user message
-    formattedContents.push({
+    rawTurns.push({
       role: "user",
-      parts: [{ text: message.trim() }]
+      text: message.trim()
     });
+
+    // Clean and alternate turns strictly (user -> model -> user ...)
+    const formattedContents = [];
+    for (const turn of rawTurns) {
+      // Must start with a user turn
+      if (formattedContents.length === 0) {
+        if (turn.role === "user") {
+          formattedContents.push({ role: "user", parts: [{ text: turn.text }] });
+        }
+        continue;
+      }
+
+      const prevTurn = formattedContents[formattedContents.length - 1];
+      if (prevTurn.role === turn.role) {
+        // Merge consecutive same-role turns
+        prevTurn.parts[0].text += `\n\n${turn.text}`;
+      } else {
+        formattedContents.push({ role: turn.role, parts: [{ text: turn.text }] });
+      }
+    }
+
+    // Ensure at least the current user turn is present
+    if (formattedContents.length === 0 || formattedContents[formattedContents.length - 1].role !== "user") {
+      formattedContents.push({ role: "user", parts: [{ text: message.trim() }] });
+    }
 
     const result = await generateContentWithFallback({
       contents: formattedContents,
