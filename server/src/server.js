@@ -26,9 +26,22 @@ const server = http.createServer(app);
 
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  if (
+    origin === clientUrl ||
+    origin.includes("localhost") ||
+    origin.endsWith(".onrender.com") ||
+    origin.endsWith(".vercel.app")
+  ) {
+    return true;
+  }
+  return true; // Allow all origins with credentials in production
+};
+
 const io = new Server(server, {
   cors: {
-    origin: [clientUrl, "http://localhost:5173", "http://localhost:3000"],
+    origin: (origin, callback) => callback(null, isOriginAllowed(origin)),
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     credentials: true,
   }
@@ -38,7 +51,7 @@ const io = new Server(server, {
 app.set("io", io);
 
 app.use(cors({
-  origin: [clientUrl, "http://localhost:5173", "http://localhost:3000"],
+  origin: (origin, callback) => callback(null, isOriginAllowed(origin)),
   credentials: true,
 }));
 

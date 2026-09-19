@@ -220,8 +220,12 @@ export default function AiChatbox({ assignments = [], onNotify }) {
 
       setMessages((prev) => [...prev, assistantMsg]);
     } catch (err) {
-      setError("NEXYRA is temporarily unavailable. Please try again.");
-      if (onNotify) onNotify("error", "NEXYRA could not process this request. Please try again.", "NEXYRA Error");
+      console.error("[AiChatbox Error]:", err);
+      const errMsg = err.message?.includes("Failed to fetch") 
+        ? "Cannot connect to server. Please check your backend URL and connection."
+        : (err.message || "NEXYRA is temporarily unavailable. Please try again.");
+      setError(errMsg);
+      if (onNotify) onNotify("error", errMsg, "NEXYRA Error");
     } finally {
       setLoading(false);
     }
